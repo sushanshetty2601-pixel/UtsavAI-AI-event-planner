@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-coral: var(--coral);
+  --color-lavender: var(--lavender);
+  --color-sage: var(--sage);
+  --color-champagne: var(--champagne);
+  --color-plum: var(--plum);
+  --color-surface-elevated: var(--surface-elevated);
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+:root {
+  /* Light mode: Ivory Celebration (Warm, editorial, luxury) */
+  --background: #FAF7F2;
+  --foreground: #302039;
+  --card: #FFFFFF;
+  --card-foreground: #302039;
+  --popover: #FFFFFF;
+  --popover-foreground: #302039;
+  --primary: #EF7187;
+  --primary-foreground: #FFFFFF;
+  --secondary: #9782E8;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F2EBF4;
+  --muted-foreground: #776D7D;
+  --accent: #F7EFF5;
+  --accent-foreground: #302039;
+  --destructive: #E11D48;
+  --destructive-foreground: #FFFFFF;
+  --border: #E9E0E7;
+  --input: #E4D9E2;
+  --ring: #EF7187;
+
+  --coral: #EF7187;
+  --lavender: #9782E8;
+  --sage: #638773;
+  --champagne: #F2D9C0;
+  --plum: #302039;
+  --surface-elevated: #FFFFFF;
+
+  --radius: 0.875rem;
+
+  --gradient-cta: linear-gradient(135deg, #EF7187 0%, #B4627A 50%, #9782E8 100%);
+  --gradient-hero: linear-gradient(135deg, #FAF7F2 0%, #FBF0F4 40%, #F5EEFA 100%);
+  --gradient-card: linear-gradient(145deg, #FFFFFF 0%, #FCF9F6 100%);
+  --shadow-card: 0 4px 20px -2px rgba(48, 32, 57, 0.06), 0 2px 6px -1px rgba(48, 32, 57, 0.03);
+  --shadow-elevated: 0 12px 36px -4px rgba(48, 32, 57, 0.12), 0 4px 12px -2px rgba(48, 32, 57, 0.06);
+  --shadow-glow: 0 0 25px rgba(239, 113, 135, 0.25);
+}
+
+.dark {
+  /* Dark mode: Midnight Gala (Deep plum, luminous coral & lavender) */
+  --background: #120F1A;
+  --foreground: #F7F0F8;
+  --card: #1D1727;
+  --card-foreground: #F7F0F8;
+  --popover: #1D1727;
+  --popover-foreground: #F7F0F8;
+  --primary: #FF7798;
+  --primary-foreground: #120F1A;
+  --secondary: #B8A4FF;
+  --secondary-foreground: #120F1A;
+  --muted: #292035;
+  --muted-foreground: #B6AABC;
+  --accent: #251C33;
+  --accent-foreground: #F7F0F8;
+  --destructive: #F87171;
+  --destructive-foreground: #120F1A;
+  --border: #393044;
+  --input: #393044;
+  --ring: #FF7798;
+
+  --coral: #FF7798;
+  --lavender: #B8A4FF;
+  --sage: #83D9C9;
+  --champagne: #D4B896;
+  --plum: #1D1727;
+  --surface-elevated: #292035;
+
+  --gradient-cta: linear-gradient(135deg, #FF7798 0%, #D86588 50%, #B8A4FF 100%);
+  --gradient-hero: linear-gradient(135deg, #120F1A 0%, #1A1228 45%, #221438 100%);
+  --gradient-card: linear-gradient(145deg, #1D1727 0%, #241C33 100%);
+  --shadow-card: 0 4px 24px -2px rgba(0, 0, 0, 0.4), 0 2px 8px -1px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 16px 44px -4px rgba(0, 0, 0, 0.6), 0 6px 16px -2px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 30px rgba(255, 119, 152, 0.3);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-serif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-display {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.gradient-cta {
+  background: var(--gradient-cta);
+}
+
+.gradient-hero {
+  background: var(--gradient-hero);
+}
+
+.gradient-card {
+  background: var(--gradient-card);
+}
+
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+.shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+
+.shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 20%, rgba(239, 113, 135, 0.15) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Accessibility: WCAG 2.2 AA Visible Focus Ring for Keyboard Users */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Accessibility: Strictly honor user prefers-reduced-motion system preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
