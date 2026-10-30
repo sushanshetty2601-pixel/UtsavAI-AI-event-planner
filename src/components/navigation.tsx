@@ -305,6 +305,9 @@ export function Navigation() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation Menu"
             className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs"
           >
             <motion.div
@@ -319,6 +322,7 @@ export function Navigation() {
                   <span className="font-display font-bold text-foreground">UtsavAI Menu</span>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
+                    aria-label="Close navigation menu"
                     className="p-1 rounded-lg text-muted-foreground hover:bg-muted"
                   >
                     <X className="w-5 h-5" />
@@ -388,6 +392,9 @@ export function Navigation() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-event-dialog-title"
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
           >
             <motion.div
@@ -401,7 +408,7 @@ export function Navigation() {
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-serif text-xl font-bold text-foreground">Delete Celebration?</h3>
+                <h3 id="delete-event-dialog-title" className="font-serif text-xl font-bold text-foreground">Delete Celebration?</h3>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                   This will permanently delete this event along with its associated budget, expenses, tasks, vendors, and AI history.
                 </p>
@@ -432,6 +439,9 @@ export function Navigation() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clear-demo-dialog-title"
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
           >
             <motion.div
@@ -445,7 +455,7 @@ export function Navigation() {
                 <LogOut className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-serif text-xl font-bold text-foreground">Clear Demo Data?</h3>
+                <h3 id="clear-demo-dialog-title" className="font-serif text-xl font-bold text-foreground">Clear Demo Data?</h3>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                   This will remove the sample 50-guest birthday event and all related demo records. Any events you personally created will remain completely safe.
                 </p>

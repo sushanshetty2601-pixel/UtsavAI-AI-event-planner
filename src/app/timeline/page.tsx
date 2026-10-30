@@ -646,15 +646,16 @@ export default function TimelinePage() {
 
       {/* Add / Edit Ceremony Dialog */}
       {subDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div role="dialog" aria-modal="true" aria-labelledby="ceremony-modal-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div className="bg-card border border-border w-full max-w-lg rounded-2xl shadow-elevated p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="font-serif text-lg font-bold text-foreground">
+              <h3 id="ceremony-modal-title" className="font-serif text-lg font-bold text-foreground">
                 {editingSub ? "Edit Ceremony Details" : "Add Celebration Ceremony"}
               </h3>
               <button
                 onClick={() => setSubDialogOpen(false)}
-                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
+                aria-label="Close dialog"
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
               >
                 ✕
               </button>
@@ -852,9 +853,9 @@ export default function TimelinePage() {
 
       {/* Add / Edit Task Dialog */}
       {taskDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div role="dialog" aria-modal="true" aria-labelledby="task-modal-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div className="bg-card border border-border w-full max-w-md rounded-2xl shadow-elevated p-6 space-y-4">
-            <h3 className="font-serif text-lg font-bold text-foreground">
+            <h3 id="task-modal-title" className="font-serif text-lg font-bold text-foreground">
               {editingTask ? "Edit Checklist Task" : "Add Checklist Task"}
             </h3>
 

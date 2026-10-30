@@ -1,27 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { PhotoAnalysis } from "@/types";
+import { imageRateLimiter } from "@/lib/rate-limit";
 
 /** Maximum allowed payload size: 10MB */
 const MAX_IMAGE_PAYLOAD_BYTES = 10 * 1024 * 1024;
 
-/** Rate limiter: 15 analysis requests per minute per IP */
-const imageRateLimitMap = new Map<string, { count: number; resetAt: number }>();
-function checkImageRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = imageRateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    imageRateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
-    return true;
-  }
-  if (entry.count >= 15) return false;
-  entry.count++;
-  return true;
-}
-
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!checkImageRateLimit(ip)) {
+  if (!imageRateLimiter.check(ip).allowed) {
     return NextResponse.json({ error: "Too many image analysis requests. Please wait a moment." }, { status: 429 });
   }
 

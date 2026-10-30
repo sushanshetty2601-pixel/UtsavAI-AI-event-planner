@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useApp } from "@/contexts/app-context";
+import { GuestModal } from "@/components/guests/guest-modal";
 import {
   Guest,
   RSVPStatus,
@@ -44,19 +45,7 @@ export default function GuestsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    rsvpStatus: "pending" as RSVPStatus,
-    group: "general" as GuestGroup,
-    plusOnes: 0,
-    dietary: "vegetarian" as DietaryPreference,
-    dietaryNotes: "",
-    tableNumber: "",
-    notes: "",
-  });
+
 
   // Calculate Metrics
   const metrics = useMemo(() => {
@@ -141,53 +130,35 @@ export default function GuestsPage() {
 
   const handleOpenAddModal = () => {
     setEditingGuest(null);
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      rsvpStatus: "pending",
-      group: "general",
-      plusOnes: 0,
-      dietary: "vegetarian",
-      dietaryNotes: "",
-      tableNumber: "",
-      notes: "",
-    });
     setIsModalOpen(true);
   };
 
   const handleOpenEditModal = (guest: Guest) => {
     setEditingGuest(guest);
-    setFormData({
-      name: guest.name,
-      phone: guest.phone || "",
-      email: guest.email || "",
-      rsvpStatus: guest.rsvpStatus,
-      group: guest.group,
-      plusOnes: guest.plusOnes || 0,
-      dietary: guest.dietary,
-      dietaryNotes: guest.dietaryNotes || "",
-      tableNumber: guest.tableNumber || "",
-      notes: guest.notes || "",
-    });
     setIsModalOpen(true);
   };
 
-  const handleSubmitModal = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim() || !activeEvent) return;
-
+  const handleSaveGuestModal = (guestData: {
+    name: string;
+    phone: string;
+    email: string;
+    rsvpStatus: RSVPStatus;
+    group: GuestGroup;
+    plusOnes: number;
+    dietary: DietaryPreference;
+    tableNumber: string;
+    dietaryNotes: string;
+    notes: string;
+  }) => {
+    if (!activeEvent) return;
     if (editingGuest) {
-      updateGuest(editingGuest.id, {
-        ...formData,
-      });
+      updateGuest(editingGuest.id, guestData);
     } else {
       createGuest({
         eventId: activeEvent.id,
-        ...formData,
+        ...guestData,
       });
     }
-
     setIsModalOpen(false);
   };
 
@@ -660,191 +631,13 @@ export default function GuestsPage() {
       )}
 
       {/* Add / Edit Guest Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card border border-border w-full max-w-lg rounded-2xl shadow-elevated p-6 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="font-serif text-lg font-bold text-foreground">
-                {editingGuest ? "Edit Guest Details" : "Add New Guest"}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
-              >
-                ✕
-              </button>
-            </div>
+      <GuestModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveGuestModal}
+        editingGuest={editingGuest}
+      />
 
-            <form onSubmit={handleSubmitModal} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                  Guest Name(s) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Vikram & Maya Malhotra"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                    Phone / WhatsApp
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+91 98450 12345"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="guest@example.com"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                    RSVP Status
-                  </label>
-                  <select
-                    value={formData.rsvpStatus}
-                    onChange={(e) => setFormData({ ...formData, rsvpStatus: e.target.value as RSVPStatus })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="attending">Attending</option>
-                    <option value="pending">Pending</option>
-                    <option value="declined">Declined</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                    Guest Group
-                  </label>
-                  <select
-                    value={formData.group}
-                    onChange={(e) => setFormData({ ...formData, group: e.target.value as GuestGroup })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="vip">VIP</option>
-                    <option value="bride_family">Bride&apos;s Family</option>
-                    <option value="groom_family">Groom&apos;s Family</option>
-                    <option value="friends">Friends</option>
-                    <option value="colleagues">Colleagues</option>
-                    <option value="general">General</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                    +1 Companions
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={formData.plusOnes}
-                    onChange={(e) => setFormData({ ...formData, plusOnes: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                    Dietary Requirement
-                  </label>
-                  <select
-                    value={formData.dietary}
-                    onChange={(e) => setFormData({ ...formData, dietary: e.target.value as DietaryPreference })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="vegetarian">🥦 Vegetarian</option>
-                    <option value="jain">🥬 Jain (No Root Veg)</option>
-                    <option value="vegan">🌱 Vegan</option>
-                    <option value="non_veg">🍗 Non-Veg</option>
-                    <option value="halal">🥩 Halal</option>
-                    <option value="gluten_free">🌾 Gluten-Free</option>
-                    <option value="no_preference">🍽️ Standard / No Preference</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                    Table Seating Label
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.tableNumber}
-                    onChange={(e) => setFormData({ ...formData, tableNumber: e.target.value })}
-                    placeholder="e.g. Table 1 (Family)"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                  Specific Dietary Notes (Allergies, etc.)
-                </label>
-                <input
-                  type="text"
-                  value={formData.dietaryNotes}
-                  onChange={(e) => setFormData({ ...formData, dietaryNotes: e.target.value })}
-                  placeholder="e.g. Severe peanut allergy, strict no onion/garlic"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">
-                  Host Notes / Logistics
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="e.g. Arriving on evening flight, needs hotel airport pickup"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border hover:bg-muted text-xs font-semibold transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl gradient-cta text-white text-xs font-bold shadow-sm hover:opacity-95 transition-all"
-                >
-                  {editingGuest ? "Update Guest" : "Add to List"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

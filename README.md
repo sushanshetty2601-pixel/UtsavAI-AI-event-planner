@@ -323,7 +323,7 @@ Under the **Environment** tab on Render, add:
 
 ## 10. Testing & Quality Verification
 
-UtsavAI includes automated test coverage implemented with Vitest:
+UtsavAI includes comprehensive automated test coverage implemented with Vitest (53 tests across 9 test suites):
 
 ### Running Test Suite
 ```bash
@@ -331,18 +331,37 @@ npm run test
 ```
 
 ### Test Coverage Highlights
-- **Financial Engine (`src/lib/__tests__/budget.test.ts`):**
+- **Financial Engine (`src/lib/__tests__/budget.test.ts` - 8 tests):**
   - Zero-expense handling and negative budget guards.
   - Quoted commitments vs. estimated amounts priority.
   - Over-budget detection and exact rupee deficit calculation.
   - Contingency reserve deduction from unallocated balances.
   - Budget Reality Check™ category trimming algorithms.
-- **Utilities & Formatting (`src/lib/__tests__/utils.test.ts`):**
+- **Table Seating & Dietary Engine (`src/lib/__tests__/seating.test.ts` - 5 tests):**
+  - Group clustering (e.g. bride family, groom family, friends).
+  - Dietary isolation (strict Jain, Vegan seating rules).
+  - Table capacity constraints and overflow handling.
+- **AI Intent Parsing (`src/lib/__tests__/ai-intent.test.ts` - 7 tests):**
+  - Natural language payment intent extraction (advances, partial payments, settlements).
+  - Natural language category budget allocation intent extraction.
+- **Storage Engine & Persistence (`src/lib/__tests__/storage.test.ts` - 8 tests):**
+  - Full CRUD operations across events, expenses, vendors, tasks, guests, and payment ledgers.
+  - Active event switching, state migration, and data export/import validation.
+- **Vendor-Expense Synchronization (`src/lib/__tests__/vendor-sync.test.ts` - 4 tests):**
+  - Bidirectional sync between vendor quotes/actual payments and itemized expenses.
+  - Event isolation and category normalization.
+- **Rate Limiting & Security Sanitizer (`src/lib/__tests__/rate-limit.test.ts` - 6 tests):**
+  - Sliding-window rate limiting algorithm validation across multiple clients.
+  - Script injection and HTML tag stripping via `sanitizeString`.
+- **API Route Validation (`src/app/api/__tests__/plan.test.ts` - 3 tests):**
+  - Payload schema validation and missing parameter rejection (400 Bad Request).
+  - Payload size guard enforcement (413 Payload Too Large).
+  - Mathematically balanced budget generation with fallback.
+- **Utilities & Formatting (`src/lib/__tests__/utils.test.ts` - 8 tests):**
   - Indian Rupee (`₹1,50,000`) number system formatting.
   - USD, EUR, and invalid monetary value fallbacks.
   - Human date formatting and deadline countdown logic.
-  - Unique ID generation and category constants completeness.
-- **Validation Schemas (`src/lib/__tests__/validation.test.ts`):**
+- **Validation Schemas (`src/lib/__tests__/validation.test.ts` - 4 tests):**
   - Strict Zod schema validation for Event records, Payment transactions, and Guest RSVP lists.
   - Rejection of negative amounts, malformed dates, and invalid dietary options.
 
@@ -351,14 +370,31 @@ npm run test
 ## 11. Security and Accessibility
 
 ### Security Implementations
-- **Server-Side API Route Protection:** Rate-limited to prevent abuse (20 req/min for chat, 15 req/min for image analysis).
-- **Payload Constraints:** 512 KB request limit for chat prompts; 10 MB limit for multimodal images.
-- **MIME Type Guards:** Validates image file formats before invoking Gemini Vision.
-- **Sanitized Markdown Rendering:** AI responses are rendered safely without arbitrary script execution.
+- **HTTP Security Headers (`next.config.ts`):**
+  - `Strict-Transport-Security` (HSTS: 2 years, includeSubDomains, preload).
+  - `X-Frame-Options: DENY` (anti-clickjacking).
+  - `X-Content-Type-Options: nosniff` (MIME sniffing prevention).
+  - `Referrer-Policy: strict-origin-when-cross-origin`.
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+  - `X-XSS-Protection: 1; mode=block`.
+- **Unified Sliding-Window Rate Limiting (`src/lib/rate-limit.ts`):**
+  - In-memory rate limiting across `/api/plan` (15 req/min), `/api/chat` (25 req/min), and `/api/analyze-image` (15 req/min).
+- **Payload & Body Guards:**
+  - 512 KB payload guard on `/api/plan` and `/api/chat`.
+  - 10 MB guard on `/api/analyze-image`.
+  - Content-Type and MIME type verification for image uploads.
+- **Client-Side Isolated Export Note:**
+  - Excel (`.xlsx`) generation is performed strictly on the client side for downloading user-initiated event plans. No untrusted spreadsheets are uploaded or parsed on the server.
 
 ### Accessibility Standards (WCAG 2.2 Level AA)
+- **Skip to Main Content Link:** Added in `src/app/layout.tsx` targeting `<main id="main-content">` in `src/components/app-shell.tsx` for quick keyboard navigation.
+- **Accessible Modal Dialogs:**
+  - All modals (`ExpenseModal`, `CategoryAllocationModal`, `VendorModal`, `GuestModal`, `CoordinatorHandoutModal`) extracted into dedicated components.
+  - Complete ARIA conformance: `role="dialog"`, `aria-modal="true"`, and `aria-labelledby`.
+  - Explicit `<label htmlFor="...">` and `<input id="...">` pairings across all form fields.
+  - Keyboard Escape key listeners for modal dismissal.
+- **Live Conversational Streaming:** Chat message scroll container in `/planner` is equipped with `aria-live="polite"` and descriptive `aria-label` for screen reader announcements.
 - **Focus Rings:** Visible, high-contrast `:focus-visible` outlines across all buttons, inputs, and interactive controls.
-- **Semantic ARIA Roles:** Modals implement `role="dialog"`, `aria-modal="true"`, and `aria-labelledby` headings.
 - **Motion Sensitivity:** Enforces `@media (prefers-reduced-motion: reduce)` globally, disabling rapid transitions and pausing background videos.
 - **Color Contrast:** Deep Midnight Plum (`#0C0914`) background with high-contrast text exceeds WCAG 4.5:1 contrast requirements.
 

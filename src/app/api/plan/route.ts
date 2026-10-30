@@ -174,6 +174,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many plan requests. Please wait a moment." }, { status: 429 });
   }
 
+  const contentLength = Number(req.headers.get("content-length") ?? 0);
+  if (contentLength > 512 * 1024) {
+    return NextResponse.json({ error: "Request payload too large." }, { status: 413 });
+  }
+
   try {
     const json = await req.json();
     const parsed = PlanRequestSchema.safeParse(json);

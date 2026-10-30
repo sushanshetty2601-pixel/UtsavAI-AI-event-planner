@@ -4,16 +4,17 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/contexts/app-context";
 import { AppShell } from "@/components/app-shell";
-import { formatCurrency, CATEGORY_LABELS } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { Expense, ExpenseCategory, PaymentStatus, BudgetCategoryAllocation } from "@/types";
 import { exportEventToExcel, exportBudgetChartToPNG } from "@/lib/export";
+import { ExpenseModal } from "@/components/budget/expense-modal";
+import { CategoryAllocationModal } from "@/components/budget/category-allocation-modal";
 import {
   WalletCards,
   Plus,
   Trash2,
   Edit2,
   Check,
-  X,
   FileSpreadsheet,
   Sparkles,
   Bot,
@@ -22,19 +23,6 @@ import {
   History,
   SlidersHorizontal,
 } from "lucide-react";
-
-const CATEGORY_CHOICES: { value: ExpenseCategory; label: string }[] = [
-  { value: "catering", label: "Catering & Food" },
-  { value: "decoration", label: "Decorations & Ambience" },
-  { value: "venue", label: "Venue & Hospitality" },
-  { value: "photography", label: "Photography & Video" },
-  { value: "cake", label: "Cake & Desserts" },
-  { value: "entertainment", label: "Music & Entertainment" },
-  { value: "invitations", label: "Invitations & Cards" },
-  { value: "transport", label: "Transport & Logistics" },
-  { value: "attire", label: "Attire & Styling" },
-  { value: "miscellaneous", label: "Other Expenses" },
-];
 
 export default function BudgetPage() {
   const {
@@ -58,20 +46,6 @@ export default function BudgetPage() {
 
   // Category Allocations Modal state
   const [allocModalOpen, setAllocModalOpen] = useState(false);
-  const [allocBudgetInput, setAllocBudgetInput] = useState(0);
-  const [allocReserveInput, setAllocReserveInput] = useState(0);
-  const [allocRows, setAllocRows] = useState<
-    { id: string; category: ExpenseCategory; label: string; amount: number }[]
-  >([]);
-
-  // Form fields
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<ExpenseCategory>("catering");
-  const [estimatedAmount, setEstimatedAmount] = useState<number>(0);
-  const [quotedAmount, setQuotedAmount] = useState<number>(0);
-  const [actualAmount, setActualAmount] = useState<number>(0);
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("unpaid");
-  const [notes, setNotes] = useState("");
 
   // AI Budget Assistant interactive state
   const [aiQuestion, setAiQuestion] = useState("");
@@ -123,109 +97,50 @@ export default function BudgetPage() {
 
   const openAddDialog = () => {
     setEditingExpense(null);
-    setTitle("");
-    setCategory("catering");
-    setEstimatedAmount(2000);
-    setQuotedAmount(2000);
-    setActualAmount(0);
-    setPaymentStatus("unpaid");
-    setNotes("");
     setDialogOpen(true);
   };
 
   const openEditDialog = (exp: Expense) => {
     setEditingExpense(exp);
-    setTitle(exp.title);
-    setCategory(exp.category);
-    setEstimatedAmount(exp.estimatedAmount);
-    setQuotedAmount(exp.quotedAmount ?? exp.estimatedAmount);
-    setActualAmount(exp.actualAmount ?? 0);
-    setPaymentStatus(exp.paymentStatus);
-    setNotes(exp.notes || "");
     setDialogOpen(true);
   };
 
   const openAllocModal = () => {
-    setAllocBudgetInput(activeEvent.budget);
-    setAllocReserveInput(activeEvent.contingencyReserve || 0);
-
-    if (activeEvent.categoryAllocations && activeEvent.categoryAllocations.length > 0) {
-      setAllocRows(
-        activeEvent.categoryAllocations.map((a, i) => ({
-          id: `alloc-${i}-${Date.now()}`,
-          category: a.category,
-          label: a.label || CATEGORY_LABELS[a.category] || a.category,
-          amount: a.allocatedAmount,
-        }))
-      );
-    } else {
-      const base = budgetSummary.categories.length > 0
-        ? budgetSummary.categories.map((c, i) => ({
-            id: `alloc-${i}-${Date.now()}`,
-            category: c.category,
-            label: c.label,
-            amount: c.allocated > 0 ? c.allocated : c.estimated || Math.round(activeEvent.budget * 0.2),
-          }))
-        : [
-            { id: "1", category: "catering" as ExpenseCategory, label: "Food & Beverages", amount: Math.round(activeEvent.budget * 0.35) },
-            { id: "2", category: "venue" as ExpenseCategory, label: "Venue & Hospitality", amount: Math.round(activeEvent.budget * 0.25) },
-            { id: "3", category: "decoration" as ExpenseCategory, label: "Decorations & Ambience", amount: Math.round(activeEvent.budget * 0.15) },
-            { id: "4", category: "photography" as ExpenseCategory, label: "Photography", amount: Math.round(activeEvent.budget * 0.10) },
-            { id: "5", category: "cake" as ExpenseCategory, label: "Cake & Desserts", amount: Math.round(activeEvent.budget * 0.05) },
-          ];
-      setAllocRows(base);
-    }
     setAllocModalOpen(true);
   };
 
-  const handleSaveAllocationsModal = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formatted: BudgetCategoryAllocation[] = allocRows.map((r) => {
-      const pct = allocBudgetInput > 0 ? Math.round(((Number(r.amount) || 0) / allocBudgetInput) * 100) : 0;
-      return {
-        category: r.category,
-        label: r.label,
-        allocatedAmount: Math.max(0, Number(r.amount) || 0),
-        percentage: pct,
-      };
-    });
-
-    saveCategoryAllocations(formatted, allocBudgetInput, allocReserveInput);
-    setAllocModalOpen(false);
-    setFeedbackMessage("Category budget allocations saved successfully!");
-    setTimeout(() => setFeedbackMessage(null), 3500);
-  };
-
-  const handleSaveExpense = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-
+  const handleSaveExpenseModal = (expenseData: {
+    title: string;
+    category: ExpenseCategory;
+    estimatedAmount: number;
+    quotedAmount: number;
+    actualAmount: number;
+    paymentStatus: PaymentStatus;
+    notes: string;
+  }) => {
     if (editingExpense) {
-      updateExpense(editingExpense.id, {
-        title,
-        category,
-        estimatedAmount: Number(estimatedAmount) || 0,
-        quotedAmount: Number(quotedAmount) || 0,
-        actualAmount: Number(actualAmount) || 0,
-        paymentStatus,
-        notes,
-      });
-      setFeedbackMessage(`Updated expense "${title}"`);
+      updateExpense(editingExpense.id, expenseData);
+      setFeedbackMessage(`Updated expense "${expenseData.title}"`);
     } else {
       createExpense({
         eventId: activeEvent.id,
-        title,
-        category,
-        estimatedAmount: Number(estimatedAmount) || 0,
-        quotedAmount: Number(quotedAmount) || 0,
-        actualAmount: Number(actualAmount) || 0,
-        paymentStatus,
-        notes,
+        ...expenseData,
       });
-      setFeedbackMessage(`Added new expense "${title}"`);
+      setFeedbackMessage(`Added new expense "${expenseData.title}"`);
     }
     setDialogOpen(false);
     setTimeout(() => setFeedbackMessage(null), 3000);
+  };
+
+  const handleSaveCategoryAllocations = (
+    finalAllocations: BudgetCategoryAllocation[],
+    targetBudget: number,
+    contingencyReserve: number
+  ) => {
+    saveCategoryAllocations(finalAllocations, targetBudget, contingencyReserve);
+    setAllocModalOpen(false);
+    setFeedbackMessage("Category budget allocations saved successfully!");
+    setTimeout(() => setFeedbackMessage(null), 3500);
   };
 
   // AI Budget Assistant query handler
@@ -841,343 +756,25 @@ export default function BudgetPage() {
           )}
         </div>
 
-        {/* Modal: Add / Edit Expense Dialog */}
-        {dialogOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-elevated space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-border">
-                <h3 className="font-serif text-xl font-bold text-foreground">
-                  {editingExpense ? "Edit Expense" : "Add New Expense"}
-                </h3>
-                <button
-                  onClick={() => setDialogOpen(false)}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+        <ExpenseModal
+          isOpen={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSave={handleSaveExpenseModal}
+          editingExpense={editingExpense}
+          currencyCode={currencyCode}
+        />
 
-              <form onSubmit={handleSaveExpense} className="space-y-3.5 text-xs">
-                <div>
-                  <label className="block font-semibold text-foreground mb-1">Expense Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Wedding Mandap & Floral Styling"
-                    className="w-full px-3.5 py-2 rounded-xl border border-input bg-background"
-                  />
-                </div>
+        <CategoryAllocationModal
+          isOpen={allocModalOpen}
+          onClose={() => setAllocModalOpen(false)}
+          onSave={handleSaveCategoryAllocations}
+          initialBudget={activeEvent.budget}
+          initialReserve={activeEvent.contingencyReserve || 0}
+          initialAllocations={activeEvent.categoryAllocations || []}
+          currencyCode={currencyCode}
+          currencyLocale={currencyLocale}
+        />
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-semibold text-foreground mb-1">Category</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-                      className="w-full px-3 py-2 rounded-xl border border-input bg-background"
-                    >
-                      <option value="catering">Catering & Food</option>
-                      <option value="decoration">Decor & Florals</option>
-                      <option value="venue">Venue</option>
-                      <option value="photography">Photography</option>
-                      <option value="cake">Cake & Desserts</option>
-                      <option value="entertainment">Music & Entertainment</option>
-                      <option value="invitations">Invitations</option>
-                      <option value="transport">Transport</option>
-                      <option value="attire">Attire & Styling</option>
-                      <option value="miscellaneous">Miscellaneous</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-foreground mb-1">Payment Status</label>
-                    <select
-                      value={paymentStatus}
-                      onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
-                      className="w-full px-3 py-2 rounded-xl border border-input bg-background"
-                    >
-                      <option value="unpaid">Unpaid</option>
-                      <option value="partially_paid">Partially Paid</option>
-                      <option value="paid">Fully Paid</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block font-semibold text-foreground mb-1">Estimated ({currencyCode})</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={estimatedAmount}
-                      onChange={(e) => setEstimatedAmount(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-input bg-background font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-foreground mb-1">Quoted ({currencyCode})</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={quotedAmount}
-                      onChange={(e) => setQuotedAmount(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-input bg-background font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-foreground mb-1">Actual Paid ({currencyCode})</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={actualAmount}
-                      onChange={(e) => setActualAmount(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-input bg-background font-semibold"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-foreground mb-1">Notes / Vendor Context</label>
-                  <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. Includes setup, teardown & service staff"
-                    className="w-full px-3.5 py-2 rounded-xl border border-input bg-background"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                  <button
-                    type="button"
-                    onClick={() => setDialogOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-border bg-card hover:bg-muted font-semibold transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl gradient-cta text-white font-bold shadow-xs hover:opacity-95 transition-opacity"
-                  >
-                    {editingExpense ? "Save Changes" : "Create Expense"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Modal: Category Budget Allocations Editor Dialog */}
-        {allocModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card p-6 shadow-elevated space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl gradient-cta flex items-center justify-center text-white shadow-xs">
-                    <SlidersHorizontal className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-xl font-bold text-foreground">
-                      Edit Category Budget Allocations
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Configure target caps for each vendor category and contingency reserve.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setAllocModalOpen(false)}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSaveAllocationsModal} className="space-y-4 text-xs">
-                <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-muted/30 border border-border">
-                  <div>
-                    <label className="block font-semibold text-foreground mb-1">
-                      Total Target Budget ({currencyCode})
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={allocBudgetInput}
-                      onChange={(e) => setAllocBudgetInput(Math.max(0, Number(e.target.value) || 0))}
-                      className="w-full px-3 py-2 rounded-xl border border-input bg-background font-bold text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-foreground mb-1">
-                      Contingency Reserve ({currencyCode})
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={allocReserveInput}
-                      onChange={(e) => setAllocReserveInput(Math.max(0, Number(e.target.value) || 0))}
-                      className="w-full px-3 py-2 rounded-xl border border-input bg-background font-bold text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-bold text-muted-foreground px-1">
-                    <div className="col-span-4">Category</div>
-                    <div className="col-span-4">Display Label</div>
-                    <div className="col-span-3 text-right">Target Cap ({currencyCode})</div>
-                    <div className="col-span-1 text-center">Action</div>
-                  </div>
-
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {allocRows.map((row) => {
-                      return (
-                        <div
-                          key={row.id}
-                          className="grid grid-cols-12 gap-2 items-center p-2 rounded-xl bg-muted/20 border border-border"
-                        >
-                          <div className="col-span-4">
-                            <select
-                              value={row.category}
-                              onChange={(e) => {
-                                const newCat = e.target.value as ExpenseCategory;
-                                const choice = CATEGORY_CHOICES.find((c) => c.value === newCat);
-                                setAllocRows((prev) =>
-                                  prev.map((r) =>
-                                    r.id === row.id
-                                      ? { ...r, category: newCat, label: choice ? choice.label : newCat }
-                                      : r
-                                  )
-                                );
-                              }}
-                              className="w-full px-2 py-1.5 rounded-lg border border-input bg-background text-xs"
-                            >
-                              {CATEGORY_CHOICES.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="col-span-4">
-                            <input
-                              type="text"
-                              value={row.label}
-                              onChange={(e) =>
-                                setAllocRows((prev) =>
-                                  prev.map((r) => (r.id === row.id ? { ...r, label: e.target.value } : r))
-                                )
-                              }
-                              className="w-full px-2 py-1.5 rounded-lg border border-input bg-background text-xs"
-                            />
-                          </div>
-
-                          <div className="col-span-3">
-                            <input
-                              type="number"
-                              min={0}
-                              value={row.amount}
-                              onChange={(e) =>
-                                setAllocRows((prev) =>
-                                  prev.map((r) =>
-                                    r.id === row.id ? { ...r, amount: Math.max(0, Number(e.target.value) || 0) } : r
-                                  )
-                                )
-                              }
-                              className="w-full px-2 py-1.5 rounded-lg border border-input bg-background text-right font-bold text-xs"
-                            />
-                          </div>
-
-                          <div className="col-span-1 flex items-center justify-center">
-                            <button
-                              type="button"
-                              onClick={() => setAllocRows((prev) => prev.filter((r) => r.id !== row.id))}
-                              className="p-1 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const avail = CATEGORY_CHOICES.find(
-                        (c) => !allocRows.some((r) => r.category === c.value)
-                      ) || CATEGORY_CHOICES[0];
-                      setAllocRows((prev) => [
-                        ...prev,
-                        {
-                          id: `alloc-new-${Date.now()}`,
-                          category: avail.value,
-                          label: avail.label,
-                          amount: 2000,
-                        },
-                      ]);
-                    }}
-                    className="w-full py-2 rounded-xl border border-dashed border-border hover:border-primary text-muted-foreground hover:text-primary text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Category Allocation Row</span>
-                  </button>
-                </div>
-
-                {/* Math Recap */}
-                {(() => {
-                  const sumCaps = allocRows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-                  const total = sumCaps + (Number(allocReserveInput) || 0);
-                  const diff = allocBudgetInput - total;
-                  return (
-                    <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-center justify-between text-xs font-medium">
-                      <div>
-                        <span>Categories + Reserve: </span>
-                        <strong>{formatCurrency(total, currencyCode, currencyLocale)}</strong> of{" "}
-                        <strong>{formatCurrency(allocBudgetInput, currencyCode, currencyLocale)}</strong>
-                      </div>
-                      <span
-                        className={`font-bold px-2 py-0.5 rounded-full ${
-                          diff < 0
-                            ? "bg-red-500/10 text-red-500"
-                            : diff === 0
-                            ? "bg-sage/15 text-sage"
-                            : "bg-primary/10 text-primary"
-                        }`}
-                      >
-                        {diff < 0
-                          ? `Over budget by ${formatCurrency(Math.abs(diff), currencyCode, currencyLocale)}`
-                          : diff === 0
-                          ? "100% Balanced"
-                          : `Buffer: ${formatCurrency(diff, currencyCode, currencyLocale)}`}
-                      </span>
-                    </div>
-                  );
-                })()}
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                  <button
-                    type="button"
-                    onClick={() => setAllocModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-border bg-card hover:bg-muted font-semibold transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl gradient-cta text-white font-bold shadow-xs hover:opacity-95 transition-opacity"
-                  >
-                    Save Category Allocations
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </AppShell>
   );

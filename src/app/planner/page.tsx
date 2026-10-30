@@ -237,7 +237,7 @@ export default function AIPlannerPage() {
         {/* Conversational Stream Card */}
         <div className="rounded-3xl border border-border bg-card shadow-card min-h-[420px] max-h-[580px] flex flex-col overflow-hidden">
           {/* Messages Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <div aria-live="polite" aria-label="AI Copilot conversation" className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             {chatMessages.length === 0 ? (
               <div className="py-12 text-center space-y-4 max-w-md mx-auto">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto text-xl">

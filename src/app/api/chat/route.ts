@@ -1,28 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { parseAllocationIntent, parsePaymentIntent } from "@/lib/ai-intent";
+import { chatRateLimiter } from "@/lib/rate-limit";
 
 /** Maximum allowed request body size: 512 KB */
 const MAX_BODY_BYTES = 512 * 1024;
 
-/** Simple in-memory rate limiter: max 20 requests per minute per IP */
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
-    return true;
-  }
-  if (entry.count >= 20) return false;
-  entry.count++;
-  return true;
-}
-
 export async function POST(req: NextRequest) {
   // Rate limiting
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (!checkRateLimit(ip)) {
+  if (!chatRateLimiter.check(ip).allowed) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
   }
 
