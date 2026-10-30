@@ -12,22 +12,15 @@ import {
   Plus,
   Trash2,
   Edit2,
-  AlertTriangle,
-  CheckCircle2,
-  TrendingDown,
-  Coins,
   Check,
   X,
   FileSpreadsheet,
-  Download,
   Sparkles,
   Bot,
-  ArrowRight,
   Loader2,
   Camera,
   History,
   SlidersHorizontal,
-  PieChart,
 } from "lucide-react";
 
 const CATEGORY_CHOICES: { value: ExpenseCategory; label: string }[] = [
@@ -47,9 +40,6 @@ export default function BudgetPage() {
   const {
     activeEvent,
     budgetSummary,
-    budgetAlternatives,
-    applyBudgetAlternative,
-    applyMultipleAlternatives,
     saveCategoryAllocations,
     expenses,
     vendors,
@@ -60,8 +50,6 @@ export default function BudgetPage() {
     deleteExpense,
     budgetHistory,
     recordBudgetSnapshot,
-    simulateOverBudget,
-    resetToNormalBudget,
     loadDemoEvent,
   } = useApp();
 
@@ -96,7 +84,6 @@ export default function BudgetPage() {
     reason: string;
   } | null>(null);
 
-  const [selectedAltIds, setSelectedAltIds] = useState<string[]>([]);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   if (!activeEvent) {
@@ -278,7 +265,7 @@ export default function BudgetPage() {
           }
         }
       }
-    } catch (_err) {
+    } catch {
       setAiResponse(
         `To optimize your budget of ${activeEvent.currency.symbol}${activeEvent.budget.toLocaleString()}, we recommend keeping catering capped at ~38% and flowers at ~15%. You currently have ${activeEvent.currency.symbol}${budgetSummary.totalRemaining.toLocaleString()} remaining.`
       );
@@ -1046,9 +1033,6 @@ export default function BudgetPage() {
 
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                     {allocRows.map((row) => {
-                      const _pct = allocBudgetInput > 0
-                        ? Math.round(((Number(row.amount) || 0) / allocBudgetInput) * 100)
-                        : 0;
                       return (
                         <div
                           key={row.id}

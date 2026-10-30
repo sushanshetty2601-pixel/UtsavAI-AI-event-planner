@@ -118,7 +118,7 @@ export default function TimelinePage() {
           origin: { y: 0.7 },
           colors: ["#EF7187", "#9782E8", "#638773", "#F2D9C0"],
         });
-      } catch (e) {
+      } catch {
         // Safe if canvas blocked
       }
     }

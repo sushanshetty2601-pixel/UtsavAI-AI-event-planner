@@ -111,3 +111,44 @@ Before pressing record, choose one of these two flows:
 - [ ] Audio voiceover is loud, crisp, and synchronized with on-screen clicks.
 - [ ] No personal bookmarks, notifications, or operating system popups recorded.
 - [ ] Video duration is between **2:15 and 2:45 minutes**.
+
+---
+
+## 5. Live Evaluator Fast-Track Journey
+
+For judges and evaluators reviewing the live application, recommend this **3-minute high-impact walkthrough**:
+
+1. **Step 1 — One-Click Experience (Landing Page `/`):**
+   - Click **"Load Demo Event"** on the hero header.
+   - Instantly loads the 50-guest celebration with realistic vendor quotes, multi-day ceremonies, and guest dietary profiles.
+2. **Step 2 — Executive Command Center (`/dashboard`):**
+   - Inspect the interactive Recharts spend donut chart, budget KPIs, and click **"Coordinator Handout Sheet"** to preview the print-ready coordinator PDF.
+3. **Step 3 — Conversational AI Copilot (`/planner`):**
+   - Type *"I paid ₹20,000 to the cake vendor"* or *"How much have I paid so far?"*
+   - Observe the instant itemized financial breakdown and click **"Confirm & Record to Ledger"**.
+4. **Step 4 — Budget Reality Check™ (`/budget`):**
+   - Click **"Simulate Over Budget"** to view the live rupee overrun calculation and apply a recommended category trimming alternative.
+5. **Step 5 — Multi-Day & Guest Hospitality (`/timeline` & `/guests`):**
+   - Review multi-day ceremony cards (Mehendi, Sangeet, Pheras) with coordinator details.
+   - Switch to `/guests` to view Jain/Halal dietary tags and run the **"Auto-Seat Unassigned Guests"** table grouping.
+6. **Step 6 — Clean Reversibility Check (`/dashboard`):**
+   - Click the amber **"Exit Demo"** button in the header and confirm.
+   - Notice the application resets cleanly to zero without orphan data.
+
+---
+
+## 6. Public Deployment & Gemini API Setup
+
+Before sharing the public demo link with evaluators:
+
+1. **Host on Render or Vercel:**
+   - Build Command: `npm install && npm run build`
+   - Start Command: `npm run start`
+   - Node Version: `20.x`
+2. **Configure Environment Secrets:**
+   - Set `GEMINI_API_KEY` in the hosting provider's dashboard (never committed to git).
+   - Set `GEMINI_FAST_MODEL=gemini-2.5-flash` and `GEMINI_PRO_MODEL=gemini-2.5-pro`.
+3. **Verify Server-Side Isolation:**
+   - Confirm that `GEMINI_API_KEY` is not present in client-side network responses or browser storage.
+4. **Resilient Fallback Check:**
+   - Even if the API key encounters rate limits or is omitted, UtsavAI's rule-based celebration planning engine seamlessly answers prompts and balances budgets without throwing runtime errors.

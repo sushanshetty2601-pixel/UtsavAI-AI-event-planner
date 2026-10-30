@@ -55,6 +55,8 @@ import {
   OVER_BUDGET_SIMULATION_EXPENSES,
 } from "@/lib/demo-data";
 import { calculateBudgetSummary, generateBudgetAlternatives } from "@/lib/budget";
+import { syncVendorsWithExpenses } from "@/lib/vendor-sync";
+import { computeTableAssignments } from "@/lib/seating";
 
 interface AppContextType {
   // Events
@@ -153,71 +155,7 @@ interface AppContextType {
   importData: (json: string) => boolean;
 }
 
-// Helper to bi-directionally synchronize vendor quotes & payments with itemized expenses
-function syncVendorsWithExpenses(
-  vendorsList: Vendor[],
-  expensesList: Expense[],
-  eventId: string
-): Expense[] {
-  const updatedExpenses = [...expensesList];
 
-  for (const v of vendorsList.filter((v) => v.eventId === eventId)) {
-    const expCat: ExpenseCategory =
-      v.category === "other" ? "miscellaneous" : (v.category as ExpenseCategory);
-
-    const paidAmt =
-      v.paymentStatus === "paid"
-        ? (v.actualAmount && v.actualAmount > 0 ? v.actualAmount : (v.quotedAmount || 0))
-        : (v.actualAmount || 0);
-
-    const existingIdx = updatedExpenses.findIndex(
-      (e) => e.vendorId === v.id || (e.title === v.name && e.category === expCat)
-    );
-
-    if (existingIdx !== -1) {
-      const exp = updatedExpenses[existingIdx];
-      if (
-        exp.actualAmount !== paidAmt ||
-        exp.quotedAmount !== (v.quotedAmount || 0) ||
-        exp.paymentStatus !== v.paymentStatus ||
-        !exp.vendorId
-      ) {
-        const synced = expenseService.update(exp.id, {
-          title: v.name,
-          category: expCat,
-          quotedAmount: v.quotedAmount || 0,
-          estimatedAmount: v.quotedAmount || 0,
-          actualAmount: paidAmt,
-          paymentStatus: v.paymentStatus,
-          vendorId: v.id,
-          notes: `Vendor Booking (${v.bookingStatus.toUpperCase()}) • ${v.name}`,
-        });
-        if (synced) {
-          updatedExpenses[existingIdx] = synced;
-        }
-      }
-    } else if (
-      (v.quotedAmount && v.quotedAmount > 0) ||
-      paidAmt > 0 ||
-      v.bookingStatus === "confirmed"
-    ) {
-      const newExp = expenseService.create({
-        eventId: v.eventId,
-        title: v.name,
-        category: expCat,
-        quotedAmount: v.quotedAmount || 0,
-        estimatedAmount: v.quotedAmount || 0,
-        actualAmount: paidAmt,
-        paymentStatus: v.paymentStatus,
-        vendorId: v.id,
-        notes: `Vendor Booking (${v.bookingStatus.toUpperCase()}) • ${v.name}`,
-      });
-      updatedExpenses.push(newExp);
-    }
-  }
-
-  return updatedExpenses;
-}
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -715,54 +653,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const autoAssignTables = useCallback(
     (seatsPerTable: number = 8) => {
       if (!activeEventId) return;
-      const attendingGuests = guests.filter(
-        (g) => g.rsvpStatus === "attending" || g.rsvpStatus === "pending"
-      );
-      const assignments: { guestId: string; tableNumber: string }[] = [];
-
-      const groupsPriority = [
-        "vip",
-        "bride_family",
-        "groom_family",
-        "friends",
-        "colleagues",
-        "general",
-      ];
-      const sorted = [...attendingGuests].sort((a, b) => {
-        return groupsPriority.indexOf(a.group) - groupsPriority.indexOf(b.group);
-      });
-
-      let currentTableIdx = 1;
-      let currentTableSeats = 0;
-      let currentGroupName = sorted[0]?.group || "general";
-
-      const getTableLabel = (num: number, grp: string) => {
-        const labels: Record<string, string> = {
-          vip: `Table ${num} (VIP)`,
-          bride_family: `Table ${num} (Bride's Family)`,
-          groom_family: `Table ${num} (Groom's Family)`,
-          friends: `Table ${num} (Friends)`,
-          colleagues: `Table ${num} (Colleagues)`,
-          general: `Table ${num}`,
-        };
-        return labels[grp] || `Table ${num}`;
-      };
-
-      sorted.forEach((g) => {
-        const guestSeatCount = 1 + (g.plusOnes || 0);
-        if (g.group !== currentGroupName && currentTableSeats > 0) {
-          currentTableIdx++;
-          currentTableSeats = 0;
-          currentGroupName = g.group;
-        } else if (currentTableSeats + guestSeatCount > seatsPerTable) {
-          currentTableIdx++;
-          currentTableSeats = 0;
-        }
-
-        const tableLabel = getTableLabel(currentTableIdx, g.group);
-        assignments.push({ guestId: g.id, tableNumber: tableLabel });
-        currentTableSeats += guestSeatCount;
-      });
+      const assignments = computeTableAssignments(guests, seatsPerTable);
 
       guestService.bulkAssignTables(activeEventId, assignments);
       setGuests((prev) =>

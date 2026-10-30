@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useApp } from "@/contexts/app-context";
 import { AppShell } from "@/components/app-shell";
@@ -321,7 +321,7 @@ function WizardContent() {
 
   // Budget — empty defaults
   const [budget, setBudget] = useState<number | "">(25000);
-  const [currencyCode, setCurrencyCode] = useState("INR");
+  const currencyCode = "INR";
   const [contingencyReserve, setContingencyReserve] = useState<number | "">(0);
 
   // Priority categories — uncapped multi-select
@@ -329,7 +329,7 @@ function WizardContent() {
 
   // Preferences — minimal, non-pre-filled
   const [themeStyle, setThemeStyle] = useState("");
-  const [foodPreferences, setFoodPreferences] = useState("");
+  const foodPreferences = "";
   const [dietaryRequirements, setDietaryRequirements] = useState("");
   const [culturalConsiderations, setCulturalConsiderations] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");

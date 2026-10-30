@@ -290,7 +290,7 @@ export async function getStorageEstimate(): Promise<{
       const usageMB = Math.round((estimate.usage || 0) / (1024 * 1024));
       const percentUsed = quotaMB > 0 ? Math.round((usageMB / quotaMB) * 100) : 0;
       return { quotaMB, usageMB, percentUsed, isAvailable: true };
-    } catch (_err) {
+    } catch {
       // Fallback
     }
   }

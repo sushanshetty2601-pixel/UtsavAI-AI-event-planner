@@ -17,7 +17,6 @@ import {
   Image as ImageIcon,
   Loader2,
   Trash2,
-  Plus,
   Check,
   Coins,
   Clock,
@@ -163,7 +162,6 @@ export default function InspirationPage() {
     deletePhotoAnalysis,
     createExpense,
     createTask,
-    loadDemoEvent,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<"themes" | "studio">("themes");
